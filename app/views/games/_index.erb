@@ -1,0 +1,7 @@
+<% @games.each do |game| %>
+  <form action="/games/<%= game.id %>/join" method="post">
+    <input type="hidden" name="_method" value="put">
+    <p><%= game.player1.username %></p>
+    <input type="submit" value="join">
+  </form>
+<% end %>

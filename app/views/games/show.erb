@@ -1,0 +1,114 @@
+<h1 id="board" data-first-player="<%= @game.player1_id %>" data-game-id="<%= @game.id %>" data-user-id="<%= current_user.id %>">Game Board</h1>
+
+<div id="player-names">
+  <p>Player 1: <%= @game.player1.username %></p>
+</div>
+
+<table>
+  <% 3.times do |x| %>
+    <tr>
+      <% 3.times do |y| %>
+        <td id="box_<%= (x * 3) + y %>">
+        </td>
+      <% end %>
+    </tr>
+  <% end %>
+</table>
+
+
+
+
+<script>
+  var game;
+
+  function getGameId(){
+    return $("#board").data("game-id");
+  }
+
+  function checkIfPlayerJoined(){
+    $.ajax({
+      type: "GET",
+      url: "/games/<%= @game.id %>/joined"
+    })
+    .done(function(response){
+      if(response === "false"){
+        setTimeout(checkIfPlayerJoined(), 3000);
+      }else{
+        startGame(response)
+      }
+    })
+  };
+
+  function startGame(username){
+    $("#player-names").append("<p>Player 2: " + username + "</p>")
+    game = new Game
+    game.updateGameState();
+  };
+
+  function Game(){
+    this.gameId = $("#board").data("game-id");
+    this.turn = 1;
+    this.player1 = $("#board").data("first-player");
+    this.player2;
+
+    this.current_player = $("#board").data("user-id");
+
+    this.updateGameState = updateGameState;
+
+
+    $("td").click(function(){
+      var box = $(this).attr("id")[4]
+      if(game.checkIfCurrentTurn()){
+        $.ajax({
+          type: "POST",
+          url: "/games/" + game.gameId + "/click",
+          data: {box: box}
+        })
+      }
+    })
+
+
+    this.currentPlayerNumber = function(){
+      if(this.current_player === this.player1){
+        return 1
+      }else{
+        return 2
+      }
+    }
+
+    this.checkIfCurrentTurn = function(){
+      return(this.turn === this.currentPlayerNumber())
+    }
+
+    function updateGameState(){
+      $.ajax({
+        type: "GET",
+        url: "/games/" + getGameId() + "/state",
+        dataType: "json"
+      })
+      .done(function(response){
+        player1 = response.game.player1_id
+        player2 = response.game.player2_id
+        game.turn = response.turn
+        for(var i = 0; i < response.moves.length; i++ ){ 
+          if(response.moves[i].user_id === player1){
+            $("td#box_" + response.moves[i].box).text("X");
+          }else{
+            $("td#box_" + response.moves[i].box).text("O");
+          }        
+        }
+        setTimeout(game.updateGameState());
+      })
+      .error(function(){
+        setTimeout(game.updateGameState());
+      })
+    }
+  }
+
+
+
+  $(document).ready(function(){
+    
+    checkIfPlayerJoined();
+  })
+</script>

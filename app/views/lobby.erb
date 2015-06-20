@@ -1,0 +1,36 @@
+<h1>Welcome to the Lobby! Create or Join a Game!</h1>
+
+<h2>Create a game here</h2>
+<form action="/games" method="post">
+  <input type="submit" value="Create a Game!">
+</form>
+
+<h2>Active game</h2>
+<h3>Play with:</h3>
+<div id="games">
+  <% @games.each do |game| %>
+    <form action="/games/<%= game.id %>/join" method="post">
+      <input type="hidden" name="_method" value="put">
+      <p><%= game.player1.username %></p>
+      <input type="submit" value="join">
+    </form>
+  <% end %>
+</div>
+
+<script>
+  function updateGameBox(){
+    $.ajax({
+      type: "GET",
+      url: "games/index"
+    })
+    .done(function(response){
+      $("#games").empty();
+      $("#games").append(response);
+      setTimeout(updateGameBox(), 3000);
+    })
+  }
+
+  $(document).ready(function(){
+    updateGameBox();
+  })
+</script>
